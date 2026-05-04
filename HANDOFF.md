@@ -109,6 +109,54 @@ When connected, TD instance info is available via `mcp__twozero_td__td_list_inst
 
 ---
 
+## Architecture Reference
+
+### Extension Class (`CollectExt`)
+
+Accessed via `me.parent()` from any script inside the component (parentshortcut: `tool`).
+
+| Method | Purpose |
+|--------|---------|
+| `Write_log(msg)` | Append a line to the Log DAT |
+| `Clear_log()` | Clear the Log DAT |
+| `Log_header(action, *segments)` | Write a timestamped section header |
+| `Log_summary(items)` | Write an aligned summary block |
+| `Get_scan_root()` | Resolve the scan root COMP |
+| `Get_exclude_list()` | Parse excluded file extensions |
+| `Get_excluded_comp_paths()` | Parse excluded COMP paths |
+| `Get_max_depth()` | Return max recursion depth (0 = unlimited) |
+| `Should_ignore_palette()` | Return ignore-palette toggle value |
+| `Is_system_path(path)` | True if path is under /ui or /sys |
+| `Is_palette_comp(node)` | True if node is a palette/packaged COMP |
+| `Refresh_status(action)` | Update Status_Data DAT |
+| `Reset_undo_log()` | Clear and re-seed Undo_Log |
+| `Record_undo_par(op_path, par_name, old_val)` | Log a parameter change for undo |
+| `Record_undo_file(src, dst, mode)` | Log a file transfer for undo |
+| `Undo_last_consolidate()` | Reverse the last consolidation |
+| `Status_line()` | Return formatted status bar string |
+
+### Custom Parameter Pages
+
+| Page | Key Parameters |
+|------|---------------|
+| Consolidate | Scanroot, Maxdepth, Findfiles (pulse), Consolidatefiles (pulse), Undo (pulse), Movefiles, Modifyparams, Conflictstrategy, Clearlog |
+| Exclusions | Ignorepalettecomps, Excludecomps, Excludefiletypes |
+| Style | Background, button, and text color tokens (Bgr/g/b, Btnr/g/b, etc.) |
+| About | Version (str, readOnly), Toxsavebuild (str, readOnly), Help (pulse) |
+
+### Internal DATs
+
+| DAT | Role |
+|-----|------|
+| `Files_Table` | Central database of found files (Directory, Filename, Extension, OP Path, Filesize, ParamName) |
+| `Log` (fifoDAT) | Real-time scrolling log. Written via `Write_log()`. |
+| `Undo_Log` (tableDAT) | Records reversible actions (par + file ops) for single-step undo |
+| `Status_Data` (tableDAT) | Summary row for the status bar (file count, MB, action, timestamp) |
+| `Helpers` (textDAT) | Extension class source — `CollectExt` |
+| `ui/tooltip` (textDAT) | Active hover tooltip text (empty when no button hovered) |
+
+---
+
 ## Key Files to Read on Start
 
 1. `CollectTDProject.tox` — binary, don't edit directly
