@@ -42,7 +42,8 @@ CollectTDProject automates the whole process.
 - **Palette/system exclusion** — skips components sourced from the TD palette and internal system paths
 - Custom **scan scope**: set a root COMP and max recursion depth
 - **Exclusion lists**: skip specific COMPs or file extensions
-- Live **status bar** always showing current conflict mode, file count, and last action
+- Live **status bar** showing current conflict mode, file count, and last action
+- **Hover tooltips** on all UI controls — descriptions appear in the status bar when you hover over any button or toggle
 - Scrollable real-time **log viewer** with ample space for long path lists
 - Self-contained: single `.tox`, no external Python packages or dependencies
 
