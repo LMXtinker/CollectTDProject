@@ -1,6 +1,6 @@
 # CollectTDProject — Handoff
 
-> For the next Claude Code instance picking this up.
+> Session date: 2026-05-05 · TOX on disk: v1.0.0 + unreleased fixes (pre v1.1.0) · For the next Claude Code instance picking this up.
 
 ---
 
@@ -8,7 +8,7 @@
 
 https://github.com/LMXtinker/CollectTDProject  
 Branch: `master` (direct commits, no PR workflow yet)  
-Latest commit: `355616e` — Fix glsl consolidation + add panel tooltip system
+Latest commit: `11919d0` — HANDOFF: add architecture reference from old handoff doc
 
 ---
 

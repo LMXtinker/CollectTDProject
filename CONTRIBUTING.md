@@ -1,5 +1,7 @@
 # Contributing to CollectTDProject
 
+> Last updated: 2026-05-05 · Applies to: v1.0.0+
+
 ## Development Setup
 
 The development source is `CollectTDProject_dev.toe` (at repo root). Open this in TouchDesigner to work on the component. When ready to release, export the inner COMP as a `.tox` via right-click → **Save Component**, saving to `CollectTDProject.tox` at repo root.

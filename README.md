@@ -1,5 +1,9 @@
 # CollectTDProject
 
+![Version](https://img.shields.io/badge/version-1.0.0-blue) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025.32460+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
+
+> Last updated: 2026-05-05 · Released: v1.0.0 · Next: v1.1.0 (glsl fix, tooltip system — pending tag)
+
 A TouchDesigner utility component that scans your project for external file dependencies, copies or moves them into a local folder structure, and rewrites operator parameters to relative paths — making your project fully portable.
 
 ---
