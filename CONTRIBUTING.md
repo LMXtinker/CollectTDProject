@@ -1,6 +1,6 @@
 # Contributing to CollectTDProject
 
-> Last updated: 2026-05-05 · Applies to: v1.1.0+
+> Last updated: 2026-05-05 · Applies to: v1.3.0+
 
 ## Development Setup
 
@@ -41,10 +41,10 @@ The component is a single `containerCOMP` with a Python extension class (`Helper
 
 | Script | Role |
 |--------|------|
-| `scanning_chopExec` | Recursive scan — evaluates all string pars, writes results to `Files_Table`, reports total file size |
-| `chopexec1` | Reads `Files_Table`, runs file transfer into categorised subfolders, rewrites OP parameters to relative paths |
+| `scanning_chopExec` | Recursive scan — evaluates all string pars, classifies each ref (existing absolute / broken / already-local-relative), writes results to `Files_Table` (incl. an `Exists` column), reports counts and total file size |
+| `chopexec1` | Reads `Files_Table`, skips rows whose source is missing on disk, runs file transfer into categorised subfolders, rewrites OP parameters to relative paths, and writes a replayable relocation log alongside the `.toe` |
 
-The extension class (`CollectExt`) provides shared helpers: `Write_log()`, `Get_exclude_list()`, `Get_scan_root()`, `Record_undo_par()`, `Record_undo_file()`, `Undo_last_consolidate()`, `Refresh_status()`, etc.
+The extension class (`ConsolidateExt`) provides shared helpers: `Write_log()`, `Get_exclude_list()`, `Get_scan_root()`, `Record_undo_par()`, `Record_undo_file()`, `Undo_last_consolidate()`, `Refresh_status()`, `Save_preset()`, `Load_preset()`, `Backup_original_toe()`, `Write_relocation_log()`, etc.
 
 Access from any script inside the component via `me.parent()` (resolves to the root COMP with the promoted extension and `parentshortcut = 'tool'`).
 
@@ -82,21 +82,23 @@ Required parameter state on `panel_callbacks`:
 The `par.panels` expression:
 
 ```python
-parent.tool.op('ui/actions') + '/* ' + parent.tool.op('ui/log_view/btn_clear') + ' ' + parent.tool.op('ui/footer/btn_instagram') + ' ' + parent.tool.op('ui/config') + '/*/tgl_* ' + parent.tool.op('ui/config') + '/*/seg_*/* ' + parent.tool.op('ui/config') + '/*/preset_* ' + ' ' + parent.tool.op('ui/config') + '/* '
+parent.tool.op('ui/actions') + '/* ' + parent.tool.op('ui/param_actions') + '/* ' + parent.tool.op('ui/log_view/btn_clear') + ' ' + parent.tool.op('ui/footer/btn_instagram') + ' ' + parent.tool.op('ui/config') + '/*/tgl_* ' + parent.tool.op('ui/config') + '/*/seg_*/* ' + parent.tool.op('ui/config') + '/*/preset_* ' + parent.tool.op('ui/config') + '/* '
 ```
 
 This covers:
 - `ui/actions/*` — main action buttons (`btn_find`, `btn_consolidate`, `btn_undo`)
+- `ui/param_actions/*` — preset save/load + global reset row (`btn_save_preset`, `btn_load_preset`, `btn_reset_global`)
 - `ui/log_view/btn_clear`, `ui/footer/btn_instagram` — single explicit panels
 - `ui/config/*/tgl_*`, `ui/config/*/seg_*/*`, `ui/config/*/preset_*` — toggles, segmented buttons, presets
 - `ui/config/*` — direct children of config (rows, headers, dividers) so they emit hover events for tooltips
 
 Dispatch is name-based via `panelValue.owner.name`:
 
-- `_TOGGLES` — binary toggles (`Modifyparams`, `Ignorepalettecomps`)
+- `_TOGGLES` — binary toggles (`Modifyparams`, `Ignorepalettecomps`, `Backupbeforeconsolidate`)
+- `_FIELD_RESETS` — per-field reset buttons (`btn_reset_types`, `btn_reset_comps`)
 - `_INDEXED` — segmented buttons with numeric suffix (`seg_mode_0/1`, `seg_conflict_0/1/2`)
 - `_PRESETS` — exclusion preset toggles (`preset_img`, `preset_vid`, etc.)
-- Direct name match — main action buttons (`btn_find`, `btn_consolidate`, `btn_undo`, `btn_clear`, `btn_instagram`)
+- Direct name match — action buttons (`btn_find`, `btn_consolidate`, `btn_undo`, `btn_clear`, `btn_instagram`, `btn_save_preset`, `btn_load_preset`, `btn_reset_global`)
 
 `onOffToOn` and `onOnToOff` both guard on `panelValue.name == 'select'` so the additional `inside` events tracked for tooltips do not accidentally trigger button dispatch.
 
@@ -133,15 +135,54 @@ Bind is two-way. When `_toggle_preset` updates `Excludefiletypes`, `tin_xtypes` 
 
 ---
 
+### Scanner Filter Rule (v1.3.0+)
+
+`scanning_chopExec` records every detected file reference *except* those that are simultaneously:
+
+1. expressed as a **relative path**, AND
+2. resolve to an absolute path **inside `project.folder`**, AND
+3. point to a file that **actually exists on disk**.
+
+Anything outside this triple — absolute paths (regardless of location), broken relative refs, references to external drives — is recorded in `Files_Table` with an `Exists` column (`'1'` / `'0'`). Broken refs are flagged with a `⚠` marker in the log so the user can see what TD references but can't load.
+
+The consolidator (`chopexec1`) then skips rows where `Exists == '0'` with a "source missing — skipped" log line; the parameter is left untouched (no relative rewrite when the source can't be transferred).
+
+### Relocation Log
+
+After a successful CONSOLIDATE, `Write_relocation_log(entries, conflict_strategy)` writes a self-contained Python file alongside the running `.toe`:
+
+```
+<project_stem>.relocation_<YYYYMMDD_HHMMSS>.py
+```
+
+The file embeds an `ENTRIES` list (one dict per transfer with `src`, `dst`, `mode`, `op_path`, `par_name`) and a `restore()` function. Running `python <file>.py` rolls back the transfer:
+
+- `move` entries → moved back to source
+- `copy` / `rename` entries → destination deleted (source untouched)
+- `overwrite` entries → flagged unrecoverable (the on-disk `.toe` backup is the only path back)
+
+This is intentionally external to TouchDesigner — works after the project has been moved, deleted, or TD uninstalled. Especially useful when other projects or apps reference the same source files.
+
+### Preset System (v1.3.0+ defaults)
+
+`Save_preset()` resolves `(folder, name)` from the COMP's `Presetpath` / `Presetname` custom pars, with smart fallbacks:
+
+- `Presetpath` blank → `~/Documents/Derivative/CollectTDProject` (created if missing)
+- `Presetname` blank → `preset_<project_stem>` (e.g. `preset_MyProject` for `MyProject.toe`)
+
+If the resolved file already exists, `_next_preset_path()` appends `_1`, `_2`, … until a free filename is found, so prior presets are never overwritten. The log records the chosen filename and the auto-increment if it kicked in.
+
 ### Code Rules
 
 1. **No `print()` for user feedback.** Use `tool.Write_log(message)` — `tool` is `me.parent()`.
 2. **No `os.rename()` for cross-drive moves.** Use `shutil.move()` or `os.replace()` as already implemented.
 3. **Wrap all parameter evaluation in `try/except`.** TD parameters frequently contain broken expressions.
-4. **Log message format:** use the standard prefixes already in use: `✓` success, `✗` error/skip, `·` neutral, `+` created, `→` transferred.
+4. **Log message format:** use the standard prefixes already in use: `✓` success, `✗` error/skip, `·` neutral, `⚠` warning, `+` created, `→` transferred, `🛡` safety backup, `📋` relocation log.
 5. **Do not break the `me.parent().op('Log')` reference.** The `Write_log()` function depends on the relative path to the `Log` DAT.
 6. **Extensions must be added to both `Dirs` AND `_PRESETS`** to be fully supported (see above).
 7. **Never set `par.panels` via `.val =` on the panel_callbacks DAT.** That switches the mode to CONSTANT and silently kills dispatch. If you need to change watched panels, edit the expression: `cb.par.panels.expr = '...'` and confirm `cb.par.panels.mode == ParMode.EXPRESSION`.
+8. **`Files_Table` schema is forward-compatible.** The consolidator resolves columns by header name via `_col_index()`, so adding a new column (e.g. `Exists`) does not break old test fixtures or loaded snapshots.
+9. **Adding a new operational par requires updating `RESETTABLE_PARS`** in `Helpers` so `Reset_all_params()` and the preset save/load cover it.
 
 ---
 
@@ -154,7 +195,7 @@ Bind is two-way. When `_toggle_preset` updates `Excludefiletypes`, `tin_xtypes` 
 Use [Semantic Versioning](https://semver.org/): `vMAJOR.MINOR.PATCH`
 
 - **PATCH** (`v1.0.1`): Bug fixes, no behaviour change.
-- **MINOR** (`v1.1.0`): New features, backwards-compatible.
+- **MINOR** (`v1.2.0`): New features, backwards-compatible.
 - **MAJOR** (`v2.0.0`): Breaking changes (parameter renames, removed functionality).
 
 ### Release Workflow

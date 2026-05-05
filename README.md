@@ -1,8 +1,8 @@
 # CollectTDProject
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025.32460+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
+![Version](https://img.shields.io/badge/version-1.3.0-blue) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025.32460+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 
-> Last updated: 2026-05-05 · Released: v1.2.0 (reset buttons, preset save/load, .toe safety backup)
+> Last updated: 2026-05-05 · Released: v1.3.0 (broken-path detection, replayable relocation log, preset auto-increment + smart defaults, redesigned panel UI)
 
 A TouchDesigner utility component that scans your project for external file dependencies, copies or moves them into a local folder structure, and rewrites operator parameters to relative paths — making your project fully portable.
 
@@ -36,20 +36,25 @@ CollectTDProject automates the whole process.
 
 - Recursive scan of the entire project network, or a defined subtree
 - Detects file references across all operator types by evaluating string parameters
+- **Broken-path detection** — references that point to missing or unreachable files are reported (with a ⚠ marker) instead of silently dropped, so nothing slips through
+- Smart skip rule — already-local references (relative path resolving inside `project.folder` and the file actually exists) are filtered out automatically; everything else (absolute, external, broken) is recorded
 - Organizes collected files into standard subfolders: `Image/`, `Movie/`, `Audio/`, `Geo/`, `Data/`, `Font/`, `Component/`
 - **Copy or Move** — non-destructive copy mode by default
 - **Conflict resolution** — Skip, Overwrite, or Auto-rename when a file already exists at the destination
 - **Rewrites OP parameters** to relative paths after transfer (optional, on by default)
 - **File size calculator** — shows total dependency size before you commit to anything
 - **Undo** — reverses the last consolidation, restoring original parameter values (and returning moved files in Move mode)
+- **Replayable relocation log** — every CONSOLIDATE writes a self-contained `<project>.relocation_<YYYYMMDD_HHMMSS>.py` next to the `.toe`. Run it with `python <file>.py` from anywhere to roll back the transfer (Move entries moved back, Copy/Rename entries deleted, Overwrite entries flagged unrecoverable). Survives TD restarts and works even if the project is deleted — useful when other projects or apps reference the same source files
 - **Exclusion presets** — one-click toggles for Images, Video, Audio, 3D/Geo, Data, and TOX file groups
 - **Palette/system exclusion** — skips components sourced from the TD palette and internal system paths
 - Custom **scan scope**: set a root COMP and max recursion depth
 - **Exclusion lists**: skip specific COMPs or file extensions
 - Live **status bar** showing current conflict mode, file count, and last action
 - **Hover tooltips** on every UI control — descriptions appear in the status bar when you hover over any button, toggle, segmented control, preset, or section header
-- **Reset buttons** — global `RESET` reverts all settings to defaults; per-field `x` icons next to *Types* and *COMPs* reset just that field
-- **Preset Save / Load** — write current settings to a JSON file at a user-set folder, reload them on demand. `Presetpath` and `Presetname` live on the COMP's *Presets* page
+- **Reset buttons** — global `RESET` reverts all settings to defaults; per-field `×` icons next to *Types* and *COMPs* reset just that field
+- **Preset Save / Load** — write current settings to a JSON file, reload them on demand
+  - **Smart defaults** — when `Presetpath` is blank, falls back to `~/Documents/Derivative/CollectTDProject` (auto-created); when `Presetname` is blank, falls back to `preset_<project_stem>` so each project keeps its own preset by default
+  - **Auto-increment** — saving over an existing preset writes `preset_name_1.json`, `_2`, etc. so previous presets are never overwritten
 - **Safety .toe backup** — optional toggle: when ON, CONSOLIDATE first saves a one-time `<project>.original.toe` next to the running `.toe`, preserving the truly original state across multiple consolidations
 - Scrollable real-time **log viewer** with ample space for long path lists
 - Self-contained: single `.tox`, no external Python packages or dependencies
@@ -86,31 +91,34 @@ CollectTDProject automates the whole process.
 ### Panel UI
 
 ```
-┌──────┬─────────────┬────────┬───────┬───────┐
-│ FIND │ CONSOLIDATE │  UNDO  │ SAVE  │ LOAD  │
-├──────┴───────────┬─┴────────┴───────┴───────┤
-│ Scan Root        │            Depth  0      │
-├──────────────────┴──────────────────────────┤
-│ Collection mode   [ Copy ]  [ Move ]        │
-│ File conflict   [ Skip ] [Overwrite] [Rename│
-│ Safety  [ON]    Backup .toe before CONSOL.  │
-├─────────────────────────────────────────────┤
-│ EXCLUSIONS                                  │
-│ [Images][Video][Audio][3D/Geo][Data][ TOX ] │
-│ x Types  .tox, .py                          │
-│ x COMPs                 Excl. palette  [ON] │
-├─────────────────────────────────────────────┤
-│ 3 files · 36.4 MB · conflict: Skip · SCAN… │
-├─────────────────────────────────────────────┤
-│                                     [RESET] │
-│  ✅ [SCAN 14:23]                            │
-│  🔍 /project1/moviefilein1 → Movie/clip.mp4 │
-│  🔍 /project1/null1/moviefilein1 → Movie/…  │
-│  🔍 /project1/tex1 → Image/logo.png        │
-│                                             │
-│                                     [CLEAR] │
-└─────────────────────────────────────────────┘
+┌──────────┬───────────────┬──────────┐
+│   FIND   │  CONSOLIDATE  │   UNDO   │   ← main actions
+├──────────┼───────────────┼──────────┤
+│   SAVE   │     LOAD      │  RESET   │   ← preset & reset (smaller row)
+├──────────┴───────┬───────┴──────────┤
+│ Scan Root        │     Depth   0    │
+├──────────────────┴──────────────────┤
+│ Collection mode  [ Copy ]  [ Move ] │
+│ File conflict  [Skip][Overwrite][Re]│
+│ Safety   Backup .toe before CONS [ON│
+├─────────────────────────────────────┤
+│ EXCLUSIONS                          │
+│ [Images][Video][Audio][3D/Geo][Data]│
+│ ×  Types   tox                      │
+│ ×  COMPs                Excl. palette
+├─────────────────────────────────────┤
+│ 8 files · 36.4 MB · conflict: Skip  │
+├─────────────────────────────────────┤
+│  [SCAN 14:23] /project1  depth=∞    │
+│  ✓ found      8 files   36.4 MB     │
+│   + clip.mp4         /project1/...  │
+│   + logo.png         /project1/...  │
+│  ⚠ broken.exr        /project1/...  │  ← broken paths flagged
+│                              [CLEAR]│
+└─────────────────────────────────────┘
 ```
+
+The top row holds the three main actions; the second row holds preset save/load and the global reset. The transfer-config rows (`Collection mode`, `File conflict`, `Safety`) share a uniform left-column label width so the right-side controls line up. The `×` icons next to *Types* and *COMPs* clear that single field.
 
 #### Exclusion Presets
 
@@ -158,10 +166,12 @@ Presets are additive — toggling one preset does not affect extensions added ma
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| Preset Folder | Folder | *(blank)* | Directory where preset JSON files live. Settable from the COMP custom pars; not exposed in the panel UI. |
-| Preset Name | String | `default` | Name of the preset to save/load (no `.json` extension needed). |
+| Preset Folder | Folder | *(blank — falls back to `~/Documents/Derivative/CollectTDProject`)* | Directory where preset JSON files live. Created automatically if the default is used and does not yet exist. |
+| Preset Name | String | *(blank — falls back to `preset_<project_stem>`)* | Name of the preset to save/load (no `.json` extension needed). The default tracks the running project so each `.toe` keeps its own preset by default. |
 
 The panel's `SAVE` and `LOAD` buttons read these two pars and write/read `<Preset Folder>/<Preset Name>.json`. The JSON contains all operational pars except `Scan Root`, `Preset Folder`, and `Preset Name`. Unknown params in a loaded JSON are skipped with a log warning (forward compatible).
+
+**Auto-increment:** if `<Preset Name>.json` already exists at the target folder, SAVE writes `<Preset Name>_1.json`, then `_2`, etc., so previous presets are never overwritten. The log line records the new filename and notes the collision.
 
 ---
 
@@ -171,9 +181,30 @@ These DATs are accessible inside the component if you need to read results progr
 
 | DAT | Contents |
 |-----|----------|
-| `Files_Table` | All found file references: OP path, parameter name, source path, category, file size |
+| `Files_Table` | All found file references: directory, filename, extension, OP path, file size, parameter name, **`Exists`** column (`'1'` if the source file is on disk, `'0'` if broken/missing) |
 | `Log` | Full log output from last run |
 | `Status_Data` | Summary row: file count, total MB, last action, timestamp, undo state |
+| `Undo_Log` | Reversible actions for the in-component single-step UNDO |
+
+## Replayable Relocation Log
+
+Every successful CONSOLIDATE writes a self-contained Python file alongside your `.toe`:
+
+```
+<project>.relocation_<YYYYMMDD_HHMMSS>.py
+```
+
+The file contains a `restore()` function and an `ENTRIES` list with `(src, dst, mode, op_path, par_name)` for every transferred file. Run it from any terminal to roll back the transfer:
+
+```bash
+python <project>.relocation_20260505_143012.py
+```
+
+- **Move** entries are moved back from `dst` to `src`.
+- **Copy / Rename** entries delete the destination (the original source is untouched).
+- **Overwrite** entries are flagged unrecoverable (the original was replaced in-place; only the on-disk `.toe` backup can recover them — see *Safety .toe backup*).
+
+This is intentionally external to TouchDesigner — the file works even after the project is moved, deleted, or TD is uninstalled. Especially useful when other projects or applications reference the same source files and need to find them at their original locations again.
 
 ---
 

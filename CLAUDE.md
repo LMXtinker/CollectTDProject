@@ -1,6 +1,6 @@
 # CollectTDProject — Claude Code Context
 
-> TOX on disk: v1.2.0 · Latest release: v1.2.0 (reset buttons, preset save/load, .toe safety backup)
+> TOX on disk: v1.3.0 · Latest release: v1.3.0 (broken-path detection, replayable relocation log, preset auto-increment + smart defaults, redesigned panel UI)
 
 ## Project
 
@@ -10,6 +10,17 @@ Repo: https://github.com/LMXtinker/CollectTDProject
 Branch: `master` (direct commits)
 Dev source: `CollectTDProject_dev.toe` (open in TD to make changes)
 Distributable: `CollectTDProject.tox` (commit after saving from TD)
+
+---
+
+## Briefing Shortcut
+
+When the user says **"brief yourself with the project"**, read only the compressed agent-ingestion versions (token-efficient, content-identical):
+- `cprsd_HANDOFF.md`
+- `cprsd_CONTRIBUTING.md`
+- `cprsd_README.md`
+
+Do NOT read the originals for this purpose. These files are gitignored and local-only.
 
 ---
 
@@ -38,9 +49,13 @@ Do this first:
 
 ### 1. (Optional) `tests/README.md`
 
-Add a brief doc explaining how to use `tests/demo_broken_paths.tox` for manual testing.
+Add a brief doc explaining how to use `tests/demo_broken_paths.tox` for manual testing. The demo's broken paths now correctly appear in scanner output (v1.3.0 broken-path detection); document the expected `⚠ ... missing on disk` log entries.
 
-### 2. (Optional, separate) Investigate textport errors
+### 2. (Optional) End-to-end CONSOLIDATE test with real assets
+
+`tests/create_demo.py` only creates broken-path nodes. To exercise the transfer + relocation log paths, either ship a small `tests/assets/` folder (jpg, mp4, wav, ttf, fbx, json, glsl, tox samples) or extend `create_demo.py` to write tiny placeholder files before saving the `.tox`. Verify that running the generated `<project>.relocation_*.py` correctly rolls back a Move-mode consolidation.
+
+### 3. (Optional, separate) Investigate textport errors
 
 - `td.tdAttributeError: 'td.OPShortcut' object has no attribute 'FNS_BORDERLESS' Context:/ui/dialogs/mainmenu/menu/saveStateScriptOp_callbacks` — TD system, not this project.
 - `ValueError: invalid literal for int() with base 10: '4.5'` — source not pinpointed. Possibly a CHOP→string conversion feeding maxdepth or similar.
@@ -55,10 +70,10 @@ Neither blocks new releases.
 
 | Op path | Role |
 |---------|------|
-| `op('/project1/CollectTDProject/chopexec1')` | Consolidator — reads Files_Table, transfers files, rewrites pars |
-| `op('/project1/CollectTDProject/scanning_chopExec')` | Scanner — evaluates all string pars, writes to Files_Table |
+| `op('/project1/CollectTDProject/chopexec1')` | Consolidator — reads Files_Table, skips missing-source rows, transfers files, rewrites pars, writes relocation log |
+| `op('/project1/CollectTDProject/scanning_chopExec')` | Scanner — evaluates all string pars, classifies refs (existing local relative / broken / external / absolute), writes to Files_Table including `Exists` column |
 | `op('/project1/CollectTDProject/ui/panel_callbacks')` | Panel dispatch + tooltip logic |
-| `op('/project1/CollectTDProject/Helpers')` | Extension class source (`CollectExt`) |
+| `op('/project1/CollectTDProject/Helpers')` | Extension class source (`ConsolidateExt`) |
 
 ### Extension Class (`ConsolidateExt`)
 
@@ -85,9 +100,10 @@ Access from any script inside component via `me.parent()` (parentshortcut: `tool
 | `Status_line()` | Return formatted status bar string |
 | `Reset_all_params()` | Reset all operational pars to defaults (preserves Scanroot, preset pars) |
 | `Reset_par(name)` | Reset a single named par to its default |
-| `Save_preset()` | Write current pars to `{Presetpath}/{Presetname}.json` |
+| `Save_preset()` | Write current pars to `{Presetpath}/{Presetname}.json`. Defaults: folder→`~/Documents/Derivative/CollectTDProject`, name→`preset_<project_stem>`. Auto-increments suffix on filename collision. |
 | `Load_preset()` | Read JSON from `{Presetpath}/{Presetname}.json` and apply pars |
 | `Backup_original_toe()` | Copy on-disk `.toe` to `<stem>.original.toe` (idempotent — only writes once) |
+| `Write_relocation_log(entries, mode)` | Write `<project>.relocation_<TS>.py` next to `.toe`. Self-contained replay file: `python <file>.py` rolls back the consolidation (move back / delete copy / flag overwrite as unrecoverable) |
 
 `RESETTABLE_PARS` (module-level constant in Helpers): the canonical list of pars touched by Reset/preset save/load. Edit this when adding a new operational par.
 
@@ -120,17 +136,19 @@ Required parameter state:
 Mode flipping `par.panels` to CONSTANT silently kills all dispatch. Always edit via `cb.par.panels.expr = '...'` and verify `cb.par.panels.mode == ParMode.EXPRESSION`.
 
 The expression covers:
-- `ui/actions/*` — main action buttons
+- `ui/actions/*` — main action buttons (FIND, CONSOLIDATE, UNDO)
+- `ui/param_actions/*` — preset+reset row (SAVE, LOAD, RESET — v1.3.0+ split out of actions)
 - `ui/log_view/btn_clear`, `ui/footer/btn_instagram` — single explicit panels
 - `ui/config/*/tgl_*`, `ui/config/*/seg_*/*`, `ui/config/*/preset_*` — toggles, segmented, presets
 - `ui/config/*` — direct children of config (rows, headers, dividers) for tooltips
 
 Dispatch is name-based via `panelValue.owner.name`:
 
-- `_TOGGLES` — binary toggles (Modifyparams, Ignorepalettecomps)
+- `_TOGGLES` — binary toggles (Modifyparams, Ignorepalettecomps, Backupbeforeconsolidate)
+- `_FIELD_RESETS` — per-field reset buttons (btn_reset_types, btn_reset_comps)
 - `_INDEXED` — segmented buttons with numeric suffix (seg_mode_0/1, seg_conflict_0/1/2)
 - `_PRESETS` — exclusion preset toggles (preset_img, preset_vid, etc.)
-- Direct name match — main action buttons (btn_find, btn_consolidate, btn_undo, btn_clear, btn_instagram)
+- Direct name match — action buttons (btn_find, btn_consolidate, btn_undo, btn_clear, btn_instagram, btn_save_preset, btn_load_preset, btn_reset_global)
 
 `onOffToOn` / `onOnToOff` both guard on `panelValue.name == 'select'` to prevent `inside` events from triggering button dispatch.
 
@@ -159,7 +177,7 @@ Bind is two-way. Read via `par.text.eval()`, NOT `par.text.val` (the latter is t
 
 | DAT | Role |
 |-----|------|
-| `Files_Table` | Found files: Directory, Filename, Extension, OP Path, Filesize, ParamName |
+| `Files_Table` | Found files: Directory, Filename, Extension, OP Path, Filesize, ParamName, Exists ('1' / '0') |
 | `Log` (fifoDAT) | Real-time scrolling log |
 | `Undo_Log` (tableDAT) | Reversible actions for single-step undo |
 | `Status_Data` (tableDAT) | Summary row for status bar |
@@ -172,7 +190,7 @@ Bind is two-way. Read via `par.text.eval()`, NOT `par.text.val` (the latter is t
 |------|---------------|
 | Consolidate | Scanroot, Maxdepth, Findfiles, Consolidatefiles, Undo, Movefiles, Modifyparams, Conflictstrategy, Backupbeforeconsolidate, Clearlog |
 | Exclusions | Ignorepalettecomps, Excludecomps, Excludefiletypes |
-| Presets | Presetpath, Presetname (no panel UI — set via custom pars on COMP) |
+| Presets | Presetpath, Presetname (no panel UI — set via custom pars on COMP). Both blank → defaults to `~/Documents/Derivative/CollectTDProject/preset_<project_stem>.json`. |
 | Style | Color tokens (Bgr/g/b, Btnr/g/b, etc.) |
 | About | Version (readOnly), Toxsavebuild (readOnly), Help |
 
@@ -183,7 +201,9 @@ Bind is two-way. Read via `par.text.eval()`, NOT `par.text.val` (the latter is t
 1. **No `print()` for user feedback.** Use `tool.Write_log(message)`.
 2. **No `os.rename()` for cross-drive moves.** Use `shutil.move()` or `os.replace()`.
 3. **Wrap parameter evaluation in `try/except`.** TD pars often broken.
-4. **Log message prefixes:** `✓` success, `✗` error/skip, `·` neutral, `+` created, `→` transferred.
+4. **Log message prefixes:** `✓` success, `✗` error/skip, `·` neutral, `⚠` warning, `+` created, `→` transferred, `🛡` safety backup, `📋` relocation log.
 5. **Extensions added to `Dirs` AND `_PRESETS`** for full support.
 6. **Do not break `me.parent().op('Log')` reference.** `Write_log()` depends on it.
 7. **Never set `par.panels` via `.val =`** on `panel_callbacks` — switches mode to CONSTANT and kills dispatch silently. Use `cb.par.panels.expr = '...'`.
+8. **`Files_Table` columns are read by header name** in `chopexec1` (`_col_index()` helper). Adding a new column does not break the consolidator.
+9. **New operational pars must be added to `RESETTABLE_PARS`** in `Helpers` so reset + preset save/load cover them.
