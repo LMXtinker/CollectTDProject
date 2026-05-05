@@ -1,8 +1,8 @@
 # CollectTDProject
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025.32460+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
+![Version](https://img.shields.io/badge/version-1.1.0-blue) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025.32460+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 
-> Last updated: 2026-05-05 · Released: v1.0.0 · Next: v1.1.0 (glsl fix, tooltip system — pending tag)
+> Last updated: 2026-05-05 · Released: v1.1.0 (panel dispatch fix, tooltip system, editable text inputs, demo fixture)
 
 A TouchDesigner utility component that scans your project for external file dependencies, copies or moves them into a local folder structure, and rewrites operator parameters to relative paths — making your project fully portable.
 
@@ -47,7 +47,7 @@ CollectTDProject automates the whole process.
 - Custom **scan scope**: set a root COMP and max recursion depth
 - **Exclusion lists**: skip specific COMPs or file extensions
 - Live **status bar** showing current conflict mode, file count, and last action
-- **Hover tooltips** on all UI controls — descriptions appear in the status bar when you hover over any button or toggle
+- **Hover tooltips** on every UI control — descriptions appear in the status bar when you hover over any button, toggle, segmented control, preset, or section header
 - Scrollable real-time **log viewer** with ample space for long path lists
 - Self-contained: single `.tox`, no external Python packages or dependencies
 
@@ -206,13 +206,14 @@ Bug reports and pull requests are welcome.
 
 Before opening a PR:
 
-1. Test against a real project with a mix of file types (image, movie, audio, geometry).
+1. Test against a real project with a mix of file types (image, movie, audio, geometry). The fixture at `tests/demo_broken_paths.tox` is a starting point.
 2. Verify that Undo correctly restores all parameters in both Copy and Move mode.
 3. Confirm palette COMPs (Stoner, etc.) are excluded when the toggle is enabled.
 4. Do not add `print()` calls for user feedback — use the `Write_log()` extension method on the component.
 5. Preserve all `try/except` blocks around parameter evaluation. TD parameters frequently contain unevaluable expressions.
+6. If you change the panel callbacks DAT (`ui/panel_callbacks`), confirm `par.panels.mode == ParMode.EXPRESSION` after your edits — flipping it to CONSTANT silently kills all UI dispatch.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup details.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, full architecture, and the panel dispatch / tooltip system reference.
 
 ---
 
