@@ -1,6 +1,6 @@
 # CollectTDProject — Claude Code Context
 
-> TOX on disk: v1.0.0 (stale) · TD-side fixes ready in `CollectTDProject_dev.toe` for v1.1.0
+> TOX on disk: v1.2.0 · Latest release: v1.2.0 (reset buttons, preset save/load, .toe safety backup)
 
 ## Project
 
@@ -36,29 +36,16 @@ Do this first:
 
 ## Pending Tasks
 
-### 1. Save the .tox + tag v1.1.0 + GitHub release
-
-The TD-side fixes from the previous session live in `CollectTDProject_dev.toe` but are NOT in `CollectTDProject.tox` yet. The .tox on disk is still v1.0.0.
-
-Steps:
-1. In TD: `op('/project1/CollectTDProject').par.Version = '1.1.0'` and `par.Toxsavebuild = app.build`
-2. Save TOX: right-click COMP → Save Component → `CollectTDProject.tox`
-3. Verify by drag-loading the new .tox into a fresh project — buttons fire, tooltips show, text fields editable.
-4. `git add CollectTDProject.tox tests/ HANDOFF.md CONTRIBUTING.md README.md CLAUDE.md`
-5. `git commit -m "release: v1.1.0 - panel dispatch fix, tooltip system, editable inputs, demo fixture"`
-6. `git tag v1.1.0 && git push && git push --tags`
-7. `gh release create v1.1.0 CollectTDProject.tox --title "v1.1.0" --notes "..."`
-
-### 2. (Optional) `tests/README.md`
+### 1. (Optional) `tests/README.md`
 
 Add a brief doc explaining how to use `tests/demo_broken_paths.tox` for manual testing.
 
-### 3. (Optional, separate) Investigate textport errors
+### 2. (Optional, separate) Investigate textport errors
 
 - `td.tdAttributeError: 'td.OPShortcut' object has no attribute 'FNS_BORDERLESS' Context:/ui/dialogs/mainmenu/menu/saveStateScriptOp_callbacks` — TD system, not this project.
 - `ValueError: invalid literal for int() with base 10: '4.5'` — source not pinpointed. Possibly a CHOP→string conversion feeding maxdepth or similar.
 
-Neither blocks v1.1.0.
+Neither blocks new releases.
 
 ---
 
@@ -73,9 +60,9 @@ Neither blocks v1.1.0.
 | `op('/project1/CollectTDProject/ui/panel_callbacks')` | Panel dispatch + tooltip logic |
 | `op('/project1/CollectTDProject/Helpers')` | Extension class source (`CollectExt`) |
 
-### Extension Class (`CollectExt`)
+### Extension Class (`ConsolidateExt`)
 
-Access from any script inside component via `me.parent()` (parentshortcut: `tool`).
+Access from any script inside component via `me.parent()` (parentshortcut: `tool`). Promoted, so `tool.<Method>()` works directly.
 
 | Method | Purpose |
 |--------|---------|
@@ -96,6 +83,13 @@ Access from any script inside component via `me.parent()` (parentshortcut: `tool
 | `Record_undo_file(src, dst, mode)` | Log file transfer for undo |
 | `Undo_last_consolidate()` | Reverse last consolidation |
 | `Status_line()` | Return formatted status bar string |
+| `Reset_all_params()` | Reset all operational pars to defaults (preserves Scanroot, preset pars) |
+| `Reset_par(name)` | Reset a single named par to its default |
+| `Save_preset()` | Write current pars to `{Presetpath}/{Presetname}.json` |
+| `Load_preset()` | Read JSON from `{Presetpath}/{Presetname}.json` and apply pars |
+| `Backup_original_toe()` | Copy on-disk `.toe` to `<stem>.original.toe` (idempotent — only writes once) |
+
+`RESETTABLE_PARS` (module-level constant in Helpers): the canonical list of pars touched by Reset/preset save/load. Edit this when adding a new operational par.
 
 ### Extension Categories Map (`chopexec1` → `Dirs`)
 
@@ -176,8 +170,9 @@ Bind is two-way. Read via `par.text.eval()`, NOT `par.text.val` (the latter is t
 
 | Page | Key Parameters |
 |------|---------------|
-| Consolidate | Scanroot, Maxdepth, Findfiles, Consolidatefiles, Undo, Movefiles, Modifyparams, Conflictstrategy, Clearlog |
+| Consolidate | Scanroot, Maxdepth, Findfiles, Consolidatefiles, Undo, Movefiles, Modifyparams, Conflictstrategy, Backupbeforeconsolidate, Clearlog |
 | Exclusions | Ignorepalettecomps, Excludecomps, Excludefiletypes |
+| Presets | Presetpath, Presetname (no panel UI — set via custom pars on COMP) |
 | Style | Color tokens (Bgr/g/b, Btnr/g/b, etc.) |
 | About | Version (readOnly), Toxsavebuild (readOnly), Help |
 

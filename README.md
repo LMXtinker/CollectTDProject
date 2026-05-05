@@ -1,8 +1,8 @@
 # CollectTDProject
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025.32460+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
+![Version](https://img.shields.io/badge/version-1.2.0-blue) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025.32460+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 
-> Last updated: 2026-05-05 · Released: v1.1.0 (panel dispatch fix, tooltip system, editable text inputs, demo fixture)
+> Last updated: 2026-05-05 · Released: v1.2.0 (reset buttons, preset save/load, .toe safety backup)
 
 A TouchDesigner utility component that scans your project for external file dependencies, copies or moves them into a local folder structure, and rewrites operator parameters to relative paths — making your project fully portable.
 
@@ -48,6 +48,9 @@ CollectTDProject automates the whole process.
 - **Exclusion lists**: skip specific COMPs or file extensions
 - Live **status bar** showing current conflict mode, file count, and last action
 - **Hover tooltips** on every UI control — descriptions appear in the status bar when you hover over any button, toggle, segmented control, preset, or section header
+- **Reset buttons** — global `RESET` reverts all settings to defaults; per-field `x` icons next to *Types* and *COMPs* reset just that field
+- **Preset Save / Load** — write current settings to a JSON file at a user-set folder, reload them on demand. `Presetpath` and `Presetname` live on the COMP's *Presets* page
+- **Safety .toe backup** — optional toggle: when ON, CONSOLIDATE first saves a one-time `<project>.original.toe` next to the running `.toe`, preserving the truly original state across multiple consolidations
 - Scrollable real-time **log viewer** with ample space for long path lists
 - Self-contained: single `.tox`, no external Python packages or dependencies
 
@@ -83,28 +86,30 @@ CollectTDProject automates the whole process.
 ### Panel UI
 
 ```
-┌─────────────┬─────────────────────┬──────────┐
-│    FIND     │     CONSOLIDATE     │   UNDO   │
-├─────────────┴─────────────────────┴──────────┤
-│ Scan Root                        Depth  0    │
-├──────────────────────────────────────────────┤
-│ Collection mode   [ Copy ]  [ Move ]         │
-│ File conflict   [ Skip ] [Overwrite] [Rename]│
-├──────────────────────────────────────────────┤
-│ EXCLUSIONS                                   │
-│ [Images][Video][Audio][3D/Geo][Data][ TOX ]  │
-│ Types   .tox, .py                            │
-│ COMPs                    Excl. palette  [ON] │
-├──────────────────────────────────────────────┤
-│ 3 files · 36.4 MB · conflict: Skip · SCAN…  │
-├──────────────────────────────────────────────┤
-│  ✅ [SCAN 14:23]                             │
-│  🔍 /project1/moviefilein1 → Movie/clip.mp4  │
+┌──────┬─────────────┬────────┬───────┬───────┐
+│ FIND │ CONSOLIDATE │  UNDO  │ SAVE  │ LOAD  │
+├──────┴───────────┬─┴────────┴───────┴───────┤
+│ Scan Root        │            Depth  0      │
+├──────────────────┴──────────────────────────┤
+│ Collection mode   [ Copy ]  [ Move ]        │
+│ File conflict   [ Skip ] [Overwrite] [Rename│
+│ Safety  [ON]    Backup .toe before CONSOL.  │
+├─────────────────────────────────────────────┤
+│ EXCLUSIONS                                  │
+│ [Images][Video][Audio][3D/Geo][Data][ TOX ] │
+│ x Types  .tox, .py                          │
+│ x COMPs                 Excl. palette  [ON] │
+├─────────────────────────────────────────────┤
+│ 3 files · 36.4 MB · conflict: Skip · SCAN… │
+├─────────────────────────────────────────────┤
+│                                     [RESET] │
+│  ✅ [SCAN 14:23]                            │
+│  🔍 /project1/moviefilein1 → Movie/clip.mp4 │
 │  🔍 /project1/null1/moviefilein1 → Movie/…  │
-│  🔍 /project1/tex1 → Image/logo.png         │
-│                                              │
-│                                      [CLEAR] │
-└──────────────────────────────────────────────┘
+│  🔍 /project1/tex1 → Image/logo.png        │
+│                                             │
+│                                     [CLEAR] │
+└─────────────────────────────────────────────┘
 ```
 
 #### Exclusion Presets
@@ -138,6 +143,7 @@ Presets are additive — toggling one preset does not affect extensions added ma
 | Move Files | Toggle | Off | Move files instead of copying. |
 | Modify Params | Toggle | On | Rewrite originating OP parameters to relative paths after transfer. |
 | Conflict Strategy | Menu | Skip | What to do when a file already exists at the destination. Options: Skip, Overwrite, Rename. |
+| Backup Before Consolidate | Toggle | Off | When ON, CONSOLIDATE saves a one-time `<project>.original.toe` next to the running `.toe` before any change. |
 | Clear Log | Pulse | — | Clear the log viewer. |
 
 ### Exclusions Page
@@ -147,6 +153,15 @@ Presets are additive — toggling one preset does not affect extensions added ma
 | Ignore Palette COMPs | Toggle | On | Skip components sourced from the TD palette or internal library. |
 | Exclude COMPs | String | *(blank)* | Comma-separated COMP paths to exclude (e.g., `/project1/bg_assets, /project1/refs`). |
 | Exclude File Types | String | *(blank)* | Comma-separated extensions to skip (e.g., `tox, py, glsl`). |
+
+### Presets Page
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| Preset Folder | Folder | *(blank)* | Directory where preset JSON files live. Settable from the COMP custom pars; not exposed in the panel UI. |
+| Preset Name | String | `default` | Name of the preset to save/load (no `.json` extension needed). |
+
+The panel's `SAVE` and `LOAD` buttons read these two pars and write/read `<Preset Folder>/<Preset Name>.json`. The JSON contains all operational pars except `Scan Root`, `Preset Folder`, and `Preset Name`. Unknown params in a loaded JSON are skipped with a log warning (forward compatible).
 
 ---
 

@@ -35,3 +35,5 @@ CollectTDProject_.tox
 # Local tooling
 .claude/
 .mcp.json
+.superpowers/
+CLAUDE.original.md
