@@ -37,6 +37,7 @@ CollectTDProject automates the whole process.
 - 📦 **Copy or Move** with three conflict strategies: Skip, Overwrite, Auto-rename
 - ✏️ **Rewrites OP parameters** to relative paths after transfer
 - ↩️ **Undo + replayable relocation log** — reverse in-panel, or run the generated `.py` from any terminal to roll back after TD is closed
+- 📋 **Copy paths to clipboard** — one-click copy of all found absolute paths
 - 🎛️ **Preset save/load** — per-project smart defaults, auto-increments on filename collision
 - 🛡️ **Safety .toe backup** — saves `<project>.original.toe` once before any change
 - 🧹 **Exclusion presets** — one-click toggles for Images, Video, Audio, 3D/Geo, Data, TOX
