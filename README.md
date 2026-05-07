@@ -6,11 +6,20 @@
 
 A TouchDesigner utility component that scans your project for external file dependencies, copies or moves them into a local folder structure, and rewrites operator parameters to relative paths — making your project fully portable.
 
+> **Beta** — Core functionality is stable. Edge cases with unusual project layouts may produce unexpected results. Please [open an issue](../../issues) if you encounter problems.
+
 ---
 
 ## Screenshots
 
+![Demo](screenshots/demo.gif)
+
+<details>
+<summary>Static screenshot</summary>
+
 ![Panel UI](screenshots/01_panel_ui.png)
+
+</details>
 
 ---
 
@@ -172,7 +181,7 @@ These DATs are accessible inside the component if you need to read results progr
 
 | DAT | Contents |
 |-----|----------|
-| `Files_Table` | All found file references: directory, filename, extension, OP path, file size, parameter name, **`Exists`** column (`'1'` if the source file is on disk, `'0'` if broken/missing) |
+| `Files_Table` | All found file references: directory, filename, extension, OP path, file size, parameter name, **`Exists`** column (`'1'` if the source file is on disk, `'0'` if broken/missing). **Full paths are here** — open the DAT viewer (`A` on the node) to read and copy-paste any path. |
 | `Log` | Full log output from last run |
 | `Status_Data` | Summary row: file count, total MB, last action, timestamp, undo state |
 | `Undo_Log` | Reversible actions for the in-component single-step UNDO |
