@@ -2,46 +2,60 @@
 
 All notable changes are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [0.3.1] — 2026-05-16 · Beta
+## [0.4.0-beta] — 2026-05-16
 
-### Fixed
-- Per-field reset buttons (`×` next to Exclude Types / Exclude COMPs) now fire — the `ui/panel_callbacks` glob pattern was missing `ui/config/*/btn_reset_*`, so the dispatcher never received the click events. Global `RESET` and all other buttons were unaffected.
-- `CONTRIBUTING.md` bug-report instructions corrected: `COPY PATHS` copies the found absolute file paths, **not** the log content (right-click → Copy on the `Log` DAT for the log).
+First public beta release. Consolidates all prior development work into a single shipped artifact. Earlier internal `v1.x` and `v0.3.x` tags have been retired.
 
-### Removed
-- Internal `text1` debug DAT (`print(parent.par.Movefiles)`, unreferenced).
-- Internal `build_panel` rebuild script (~324 lines). Its embedded `PANEL_CALLBACKS_SOURCE` was stuck at the 0.1.x dispatcher and would have silently downgraded the panel if run. Component is now authored live per `CONTRIBUTING.md` — no build step.
+### Scanning
 
-## [0.3.0] — 2026-05-08 · Beta
+- Recursive scan of the project network or a defined subtree from a configurable Scan Root
+- Detects file references across all operator types by evaluating string parameters
+- Smart skip rule — already-local relative references that resolve inside `project.folder` are filtered automatically; everything else (absolute, external, broken) is recorded
+- Configurable `Max Depth` (0 = unlimited)
+- Exclusion lists: skip specific COMP paths or file extensions
+- Palette / system exclusion — skips components from the TD palette and internal system paths
+- **Broken-path detection** — missing source files are flagged with `⚠` in the scan log, never silently dropped. The `Files_Table` `Exists` column records `'1'` (on disk) or `'0'` (missing).
 
-### Added
-- Broken-path detection: ⚠ marker flags missing source files in the scan log
-- Replayable relocation log: `<project>.relocation_<TS>.py` written after each CONSOLIDATE — run `python <file>.py` from any terminal to reverse a transfer, even after TD is closed
-- Scan log shows OP short name and family type (TOP / CHOP / SOP / COMP / DAT) per entry, plus full path
-- **COPY PATHS** button next to CLEAR — copies all found absolute paths to system clipboard, one per line
-- Structured log output: marker legend, column header (`name.filetype  [Node]  node name  path to file`), aligned divider
-- Filename middle-truncation past 30 chars (`Gemini_Generat...06zlo506z.png`)
-- OP short-name middle-truncation past 20 chars
-- Preset save/load with per-project smart defaults and auto-increment on filename collision
-- Preset JSON now also captures the current log content under a `log` key
-- Safety `.toe` backup toggle: saves `<project>.original.toe` once before any change
-- Per-field reset buttons (`×`) for Types and COMPs; global `RESET` for all settings
-- Hover tooltips on every UI control (shown in the status bar)
+### Transfer
 
-### Changed
-- Panel UI redesigned and compacted
-- Exclusion palette toggle relocated to Safety row
-- Instagram icon moved to `assets/` with relative path reference (was absolute, leaked username)
-- Version scheme changed to 0.x.y (pre-1.0 beta)
-- TD version requirement relaxed to TouchDesigner 2025 (any build)
-- Network annotations refreshed to reflect current architecture
-- `scripts/` and `tests/` now gitignored (kept local, not in public repo)
-- `CONTRIBUTING.md` slimmed to essentials
+- **Copy** or **Move** modes
+- Three conflict strategies: **Skip**, **Overwrite**, **Auto-Rename** (e.g. `clip_1.mp4`)
+- Rewrites originating OP parameters to relative paths after transfer (toggle: `Modify Params`)
+- Output organised into category folders: `Image/`, `Movie/`, `Audio/`, `Geo/`, `Data/`, `Font/`, `Component/`
+- File size calculator — total dependency size reported before commit
 
-## [0.2.0]
+### Safety
 
-- Reset buttons, preset save/load, `.toe` safety backup
+- **Undo** — in-panel single-step reversal of the last consolidation
+- **Replayable relocation log** — every successful CONSOLIDATE writes `<project>.relocation_<TS>.py` next to the `.toe`. Run `python <file>.py` from any terminal to reverse a transfer, even after TD is closed
+- **Safety `.toe` backup** toggle — saves `<project>.original.toe` once before any change
 
-## [0.1.0]
+### Panel UI
 
-- Panel dispatch fix, tooltip system, editable inputs, demo fixture
+- Three-row layout: FIND / CONSOLIDATE / UNDO action row, SAVE / LOAD / RESET preset+reset row, config grid (Scan, Mode, Conflict, Safety, Exclusions)
+- Exclusion presets — one-click toggles for Images, Video, Audio, 3D/Geo, Data, TOX
+- Per-field reset buttons (`×`) next to *Exclude Types* and *Exclude COMPs*; global `RESET` for all settings
+- **COPY PATHS** button — copies all found absolute paths to clipboard, one per line
+- Hover tooltips on every control (shown in the status bar)
+- Live status bar — conflict mode, file count, last action timestamp
+- Structured log output — marker legend (`+` on disk, `⚠` missing), column header (`name.filetype  [Node]  node name  path to file`), aligned divider
+- Filename middle-truncation past 30 chars; OP short-name middle-truncation past 20 chars
+
+### Presets
+
+- Save / load all operational parameters to JSON
+- Per-project smart defaults: preset name auto-resolves to `preset_<project_stem>` and folder to `~/Documents/Derivative/CollectTDProject`
+- Auto-increment on filename collision — `preset_X.json` becomes `preset_X_1.json`, `_2`, etc.
+- Forward-compatible loader — unknown keys are skipped with a log warning
+- JSON also captures the current log content under a `log` key
+
+### Internals
+
+- Single `.tox`, no external Python packages or dependencies
+- Self-contained `ConsolidateExt` extension class (promoted as `parent.tool`)
+- TouchDesigner 2025 (any build)
+- Network annotations describe each functional block
+
+### Acknowledgments
+
+Built on top of [TD-File-Collector](https://github.com/mourendxu/TD-File-Collector) by mourendxu (GPL-3.0). The core file-scanning and parameter-rewriting approach originates from that project.
