@@ -4,23 +4,14 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 
 ## [0.5.0-beta] — 2026-05-16
 
-### Changed (breaking)
-- **Renamed** the project and component from `CollectTDProject` to `tdCollectProject`. Release asset is now `tdCollectProject.tox`; root COMP path is `/project1/tdCollectProject`.
-- **Default preset folder** moved from `~/Documents/Derivative/CollectTDProject` to `~/Documents/Derivative/tdCollectProject`. Any presets saved with v0.4.0-beta under the old folder will not be auto-discovered — move them manually if you want them picked up by the new default.
-- **GitHub repository** renamed to `LMXtinker/tdCollectProject`. The old URL (`LMXtinker/CollectTDProject`) auto-redirects, but update any local clones via `git remote set-url origin https://github.com/LMXtinker/tdCollectProject.git`.
-
-No functional or behavioural changes beyond the rename.
-
-## [0.4.0-beta] — 2026-05-16
-
-First public beta release. Consolidates all prior development work into a single shipped artifact. Earlier internal `v1.x` and `v0.3.x` tags have been retired.
+First public beta release of `tdCollectProject` (formerly `CollectTDProject`). Consolidates all prior internal development into a single shipped artifact. Earlier internal `v1.x` and `v0.3.x` tags have been retired.
 
 ### Scanning
 
 - Recursive scan of the project network or a defined subtree from a configurable Scan Root
 - Detects file references across all operator types by evaluating string parameters
 - Smart skip rule — already-local relative references that resolve inside `project.folder` are filtered automatically; everything else (absolute, external, broken) is recorded
-- Configurable `Max Depth` (0 = unlimited)
+- Configurable `Max Depth` (`0` = unlimited)
 - Exclusion lists: skip specific COMP paths or file extensions
 - Palette / system exclusion — skips components from the TD palette and internal system paths
 - **Broken-path detection** — missing source files are flagged with `⚠` in the scan log, never silently dropped. The `Files_Table` `Exists` column records `'1'` (on disk) or `'0'` (missing).
@@ -41,7 +32,7 @@ First public beta release. Consolidates all prior development work into a single
 
 ### Panel UI
 
-- Three-row layout: FIND / CONSOLIDATE / UNDO action row, SAVE / LOAD / RESET preset+reset row, config grid (Scan, Mode, Conflict, Safety, Exclusions)
+- Three-row layout: FIND / CONSOLIDATE / UNDO action row · SAVE / LOAD / RESET preset+reset row · config grid (Scan, Mode, Conflict, Safety, Exclusions)
 - Exclusion presets — one-click toggles for Images, Video, Audio, 3D/Geo, Data, TOX
 - Per-field reset buttons (`×`) next to *Exclude Types* and *Exclude COMPs*; global `RESET` for all settings
 - **COPY PATHS** button — copies all found absolute paths to clipboard, one per line
@@ -57,6 +48,11 @@ First public beta release. Consolidates all prior development work into a single
 - Auto-increment on filename collision — `preset_X.json` becomes `preset_X_1.json`, `_2`, etc.
 - Forward-compatible loader — unknown keys are skipped with a log warning
 - JSON also captures the current log content under a `log` key
+
+### Project rename
+
+- Project + component renamed from `CollectTDProject` to `tdCollectProject`. Release asset is now `tdCollectProject.tox`; root COMP path is `/project1/tdCollectProject`.
+- GitHub repository renamed to `LMXtinker/tdCollectProject`. The old URL auto-redirects; update local clones with `git remote set-url origin https://github.com/LMXtinker/tdCollectProject.git`.
 
 ### Internals
 
