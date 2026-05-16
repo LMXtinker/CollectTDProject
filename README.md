@@ -2,7 +2,7 @@
 
 ![Version](https://img.shields.io/badge/version-0.3.0-blue) ![Status](https://img.shields.io/badge/status-beta-yellow) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 
-> Last updated: 2026-05-07 · v0.3.0 (beta) — broken-path detection, replayable relocation log, preset save/load with auto-increment, redesigned panel UI
+> Last updated: 2026-05-08 · v0.3.0 (beta) — broken-path detection, replayable relocation log, preset save/load with auto-increment, structured log columns, COPY PATHS button, redesigned panel UI
 
 A TouchDesigner utility component that scans your project for external file dependencies, copies or moves them into a local folder structure, and rewrites operator parameters to relative paths — making your project fully portable.
 
@@ -66,7 +66,7 @@ CollectTDProject automates the whole process.
 
 - TouchDesigner 2025 (any build)
 - Python 3.11+ (bundled with TD 2025)
-- Windows or macOS
+- Windows (developed + tested) · macOS untested (likely works — pure-Python `os.path` + `shutil`, no platform-specific calls)
 
 ---
 
@@ -112,14 +112,19 @@ CollectTDProject automates the whole process.
 ├─────────────────────────────────────┤
 │  [SCAN 14:23] /project1  depth=∞    │
 │  ✓ found      8 files   36.4 MB     │
-│   + clip.mp4         /project1/...  │
-│   + logo.png         /project1/...  │
-│  ⚠ broken.exr        /project1/...  │  ← broken paths flagged
-│                              [CLEAR]│
+│                                     │
+│  + = file on disk   ⚠ = missing     │
+│                                     │
+│  name.filetype  [Node]  node name…  │
+│  ──────────────────────────────     │
+│   + clip.mp4    [TOP ]  movie_in    │
+│   + logo.png    [TOP ]  img_brand   │
+│  ⚠  broken.exr  [TOP ]  hero_layer  │
+│                  [COPY PATHS][CLEAR]│
 └─────────────────────────────────────┘
 ```
 
-The top row holds the three main actions; the second row holds preset save/load and the global reset. The transfer-config rows (`Collection mode`, `File conflict`, `Safety`) share a uniform left-column label width so the right-side controls line up. The `×` icons next to *Types* and *COMPs* clear that single field.
+The top row holds the three main actions; the second row holds preset save/load and the global reset. The transfer-config rows (`Collection mode`, `File conflict`, `Safety`) share a uniform left-column label width so the right-side controls line up. The `×` icons next to *Types* and *COMPs* clear that single field. **COPY PATHS** dumps every found absolute path to the clipboard, one per line. Each log row shows the filename (middle-truncated past 30 chars), node family tag in brackets, owning OP short name (truncated past 20 chars), and full path.
 
 #### Exclusion Presets
 
@@ -249,18 +254,7 @@ Undo state is cleared when a new **FIND** scan is run.
 
 ## Contributing
 
-Bug reports and pull requests are welcome.
-
-Before opening a PR:
-
-1. Test against a real project with a mix of file types (image, movie, audio, geometry). The fixture at `tests/demo_broken_paths.tox` is a starting point.
-2. Verify that Undo correctly restores all parameters in both Copy and Move mode.
-3. Confirm palette COMPs (Stoner, etc.) are excluded when the toggle is enabled.
-4. Do not add `print()` calls for user feedback — use the `Write_log()` extension method on the component.
-5. Preserve all `try/except` blocks around parameter evaluation. TD parameters frequently contain unevaluable expressions.
-6. If you change the panel callbacks DAT (`ui/panel_callbacks`), confirm `par.panels.mode == ParMode.EXPRESSION` after your edits — flipping it to CONSTANT silently kills all UI dispatch.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, full architecture, and the panel dispatch / tooltip system reference.
+Bug reports and pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, code conventions, and reporting guidelines.
 
 ---
 

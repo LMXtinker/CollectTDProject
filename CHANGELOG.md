@@ -2,14 +2,18 @@
 
 All notable changes are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
-## [0.3.0] — 2026-05-07 · Beta
+## [0.3.0] — 2026-05-08 · Beta
 
 ### Added
 - Broken-path detection: ⚠ marker flags missing source files in the scan log
 - Replayable relocation log: `<project>.relocation_<TS>.py` written after each CONSOLIDATE — run `python <file>.py` from any terminal to reverse a transfer, even after TD is closed
-- Scan log shows OP short name and family type (TOP / CHOP / SOP / COMP / DAT) per entry
+- Scan log shows OP short name and family type (TOP / CHOP / SOP / COMP / DAT) per entry, plus full path
 - **COPY PATHS** button next to CLEAR — copies all found absolute paths to system clipboard, one per line
+- Structured log output: marker legend, column header (`name.filetype  [Node]  node name  path to file`), aligned divider
+- Filename middle-truncation past 30 chars (`Gemini_Generat...06zlo506z.png`)
+- OP short-name middle-truncation past 20 chars
 - Preset save/load with per-project smart defaults and auto-increment on filename collision
+- Preset JSON now also captures the current log content under a `log` key
 - Safety `.toe` backup toggle: saves `<project>.original.toe` once before any change
 - Per-field reset buttons (`×`) for Types and COMPs; global `RESET` for all settings
 - Hover tooltips on every UI control (shown in the status bar)
@@ -17,9 +21,12 @@ All notable changes are documented here. Format follows [Keep a Changelog](https
 ### Changed
 - Panel UI redesigned and compacted
 - Exclusion palette toggle relocated to Safety row
+- Instagram icon moved to `assets/` with relative path reference (was absolute, leaked username)
 - Version scheme changed to 0.x.y (pre-1.0 beta)
 - TD version requirement relaxed to TouchDesigner 2025 (any build)
 - Network annotations refreshed to reflect current architecture
+- `scripts/` and `tests/` now gitignored (kept local, not in public repo)
+- `CONTRIBUTING.md` slimmed to essentials
 
 ## [0.2.0]
 

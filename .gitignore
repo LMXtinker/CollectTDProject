@@ -8,7 +8,9 @@ old/
 CollectTDProject_dev.toe
 CollectTDProject_handoff.md
 HANDOFF.md
-scripts/refresh_status_patch.md
+scripts/
+tests/
+screenshots/test_*.png
 
 # OS
 .DS_Store
