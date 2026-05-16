@@ -1,8 +1,8 @@
 # CollectTDProject
 
-![Version](https://img.shields.io/badge/version-0.3.0-blue) ![Status](https://img.shields.io/badge/status-beta-yellow) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
+![Version](https://img.shields.io/badge/version-0.3.1-blue) ![Status](https://img.shields.io/badge/status-beta-yellow) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 
-> Last updated: 2026-05-08 · v0.3.0 (beta) — broken-path detection, replayable relocation log, preset save/load with auto-increment, structured log columns, COPY PATHS button, redesigned panel UI
+> Last updated: 2026-05-16 · v0.3.1 (beta) — fix per-field reset buttons (× next to Types/COMPs), tox cleanup, doc fix
 
 A TouchDesigner utility component that scans your project for external file dependencies, copies or moves them into a local folder structure, and rewrites operator parameters to relative paths — making your project fully portable.
 

@@ -9,7 +9,7 @@ Open a [GitHub Issue](../../issues/new?template=bug_report.md). Please include:
 - TouchDesigner version (Help → About)
 - OS (Windows / macOS)
 - Steps to reproduce
-- Full log output from the panel after the failure (copy with the **COPY PATHS** button or right-click → copy on the Log DAT inside the COMP)
+- Full log output from the panel after the failure (right-click → Copy on the `Log` DAT inside the COMP — the **COPY PATHS** button copies only the found absolute file paths, not the log)
 
 ## Development
 

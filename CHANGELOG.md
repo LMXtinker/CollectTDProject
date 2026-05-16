@@ -2,6 +2,16 @@
 
 All notable changes are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.3.1] — 2026-05-16 · Beta
+
+### Fixed
+- Per-field reset buttons (`×` next to Exclude Types / Exclude COMPs) now fire — the `ui/panel_callbacks` glob pattern was missing `ui/config/*/btn_reset_*`, so the dispatcher never received the click events. Global `RESET` and all other buttons were unaffected.
+- `CONTRIBUTING.md` bug-report instructions corrected: `COPY PATHS` copies the found absolute file paths, **not** the log content (right-click → Copy on the `Log` DAT for the log).
+
+### Removed
+- Internal `text1` debug DAT (`print(parent.par.Movefiles)`, unreferenced).
+- Internal `build_panel` rebuild script (~324 lines). Its embedded `PANEL_CALLBACKS_SOURCE` was stuck at the 0.1.x dispatcher and would have silently downgraded the panel if run. Component is now authored live per `CONTRIBUTING.md` — no build step.
+
 ## [0.3.0] — 2026-05-08 · Beta
 
 ### Added
