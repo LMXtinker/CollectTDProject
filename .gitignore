@@ -11,6 +11,7 @@ HANDOFF.md
 scripts/
 tests/
 screenshots/test_*.png
+local_test_*
 
 # OS
 .DS_Store
