@@ -2,6 +2,24 @@
 
 All notable changes are documented here. Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.1-beta] — 2026-05-16
+
+Patch release. Documentation refresh + tooltip robustness fixes.
+
+### Documentation
+
+- Replaced the ASCII panel-UI diagram in `README.md` with an up-to-date screenshot of the rendered panel
+- Generated a new 4-frame `demo.gif` (network with errors → empty UI → FIND log → CONSOLIDATE log)
+- Added rendered screenshots for every custom parameter page (Consolidate, Exclusions, Style, Presets, About) with the page tab header visible
+- Documented the previously-undocumented **Style** page (7 color groups) and **About** page (Version, Tox Save Build, Help)
+- Deleted stale screenshot orphans (`01_panel_ui.png`, `gif_01_empty.png`, `gif_02_scan.png`)
+
+### Fixed
+
+- **Tooltip drop-out when crossing clickthrough labels.** When the mouse moved from a clickthrough label onto its underlying button, `inside` events fired in unpredictable order — a stale `inside=0` from the label could blank a freshly-set tooltip. The panel callback now tracks the active tooltip source path and ignores leave events from siblings that never owned the tooltip.
+- **Tooltips broken by wrapping rows in empty layout containers.** The `panelexecuteDAT.par.panels` expression hard-coded specific depths under `ui/config/*` — re-parenting a row into a wrapper made it invisible to the callback dispatcher. The expression now generates patterns for depths 1–6 under `ui/config`, so arbitrary wrapper-container nesting no longer breaks tooltips or click dispatch.
+- **Leaf hovers now resolve to enclosing row tooltips** via a new `_resolve_tooltip` ancestor walk. Hovering an input field, label, or icon inside a row picks up that row's tooltip; more-specific entries on inner buttons still win over the parent row.
+
 ## [0.5.0-beta] — 2026-05-16
 
 First public beta release of `tdCollectProject` (formerly `CollectTDProject`). Consolidates all prior internal development into a single shipped artifact. Earlier internal `v1.x` and `v0.3.x` tags have been retired.

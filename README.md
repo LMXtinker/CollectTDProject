@@ -1,8 +1,8 @@
 # tdCollectProject
 
-![Version](https://img.shields.io/badge/version-0.5.0--beta-blue) ![Status](https://img.shields.io/badge/status-beta-yellow) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
+![Version](https://img.shields.io/badge/version-0.5.1--beta-blue) ![Status](https://img.shields.io/badge/status-beta-yellow) ![TouchDesigner](https://img.shields.io/badge/TouchDesigner-2025+-orange) ![License](https://img.shields.io/badge/license-GPL--3.0-green)
 
-> Last updated: 2026-05-16 · v0.5.0-beta — project renamed to `tdCollectProject`
+> Last updated: 2026-05-16 · v0.5.1-beta — docs refresh + tooltip event-order fix
 
 A TouchDesigner utility component that scans your project for external file dependencies, copies or moves them into a local folder structure, and rewrites operator parameters to relative paths — making your project fully portable.
 
@@ -14,12 +14,7 @@ A TouchDesigner utility component that scans your project for external file depe
 
 ![Demo](screenshots/demo.gif)
 
-<details>
-<summary>Static screenshot</summary>
-
-![Panel UI](screenshots/01_panel_ui.png)
-
-</details>
+![Panel UI](screenshots/panel_ui.png)
 
 ---
 
@@ -91,38 +86,7 @@ tdCollectProject automates the whole process.
 
 ### Panel UI
 
-```
-┌──────────┬───────────────┬──────────┐
-│   FIND   │  CONSOLIDATE  │   UNDO   │   ← main actions
-├──────────┼───────────────┼──────────┤
-│   SAVE   │     LOAD      │  RESET   │   ← preset & reset (smaller row)
-├──────────┴───────┬───────┴──────────┤
-│ Scan Root        │     Depth   0    │
-├──────────────────┴──────────────────┤
-│ Collection mode  [ Copy ]  [ Move ] │
-│ File conflict  [Skip][Overwrite][Re]│
-│ Safety   Backup .toe before CONS [ON│
-├─────────────────────────────────────┤
-│ EXCLUSIONS                          │
-│ [Images][Video][Audio][3D/Geo][Data]│
-│ ×  Types   tox                      │
-│ ×  COMPs                Excl. palette
-├─────────────────────────────────────┤
-│ 8 files · 36.4 MB · conflict: Skip  │
-├─────────────────────────────────────┤
-│  [SCAN 14:23] /project1  depth=∞    │
-│  ✓ found      8 files   36.4 MB     │
-│                                     │
-│  + = file on disk   ⚠ = missing     │
-│                                     │
-│  name.filetype  [Node]  node name…  │
-│  ──────────────────────────────     │
-│   + clip.mp4    [TOP ]  movie_in    │
-│   + logo.png    [TOP ]  img_brand   │
-│  ⚠  broken.exr  [TOP ]  hero_layer  │
-│                  [COPY PATHS][CLEAR]│
-└─────────────────────────────────────┘
-```
+![Panel UI](screenshots/panel_ui.png)
 
 The top row holds the three main actions; the second row holds preset save/load and the global reset. The transfer-config rows (`Collection mode`, `File conflict`, `Safety`) share a uniform left-column label width so the right-side controls line up. The `×` icons next to *Types* and *COMPs* clear that single field. **COPY PATHS** dumps every found absolute path to the clipboard, one per line. Each log row shows the filename (middle-truncated past 30 chars), node family tag in brackets, owning OP short name (truncated past 20 chars), and full path.
 
@@ -160,6 +124,8 @@ Presets are additive — toggling one preset does not affect extensions added ma
 | Backup Before Consolidate | Toggle | Off | When ON, CONSOLIDATE saves a one-time `<project>.original.toe` next to the running `.toe` before any change. |
 | Clear Log | Pulse | — | Clear the log viewer. |
 
+![Consolidate page](screenshots/params_consolidate.png)
+
 ### Exclusions Page
 
 | Parameter | Type | Default | Description |
@@ -168,6 +134,24 @@ Presets are additive — toggling one preset does not affect extensions added ma
 | Exclude COMPs | String | *(blank)* | Comma-separated COMP paths to exclude (e.g., `/project1/bg_assets, /project1/refs`). |
 | Exclude File Types | String | *(blank)* | Comma-separated extensions to skip (e.g., `tox, py, glsl`). |
 
+![Exclusions page](screenshots/params_exclusions.png)
+
+### Style Page
+
+Per-instance color overrides for the panel UI. All values are 0.0–1.0 floats, exposed as RGB triplets so the entire skin can be re-themed without editing the TOX.
+
+| Parameter group | Default RGB | Purpose |
+|-----------------|-------------|---------|
+| Background | 0.10, 0.10, 0.11 | Main panel background |
+| Background Alt | 0.16, 0.16, 0.18 | Alternating row / sub-panel background |
+| Button | 0.22, 0.22, 0.25 | Neutral button base color |
+| Button Accent | 0.28, 0.55, 0.95 | Primary action button (CONSOLIDATE) |
+| Button Undo | 0.65, 0.35, 0.20 | UNDO button accent |
+| Text | 0.85, 0.85, 0.88 | Primary text / labels |
+| Text Dim | 0.55, 0.55, 0.60 | Secondary text / placeholders |
+
+![Style page](screenshots/params_style.png)
+
 ### Presets Page
 
 | Parameter | Type | Default | Description |
@@ -175,9 +159,21 @@ Presets are additive — toggling one preset does not affect extensions added ma
 | Preset Folder | Folder | *(blank — falls back to `~/Documents/Derivative/tdCollectProject`)* | Directory where preset JSON files live. Created automatically if the default is used and does not yet exist. |
 | Preset Name | String | *(blank — falls back to `preset_<project_stem>`)* | Name of the preset to save/load (no `.json` extension needed). The default tracks the running project so each `.toe` keeps its own preset by default. |
 
+![Presets page](screenshots/params_presets.png)
+
 The panel's `SAVE` and `LOAD` buttons read these two pars and write/read `<Preset Folder>/<Preset Name>.json`. The JSON contains all operational pars except `Scan Root`, `Preset Folder`, and `Preset Name`. Unknown params in a loaded JSON are skipped with a log warning (forward compatible).
 
 **Auto-increment:** if `<Preset Name>.json` already exists at the target folder, SAVE writes `<Preset Name>_1.json`, then `_2`, etc., so previous presets are never overwritten. The log line records the new filename and notes the collision.
+
+### About Page
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| Version | String | `0.5.0` | Component version. Read-only marker used by the changelog. |
+| Tox Save Build | String | *(populated on save)* | TouchDesigner build number that last saved the `.tox`. Helps diagnose forward/backward compatibility issues. |
+| Help | Pulse | — | Opens the README / project documentation. |
+
+![About page](screenshots/params_about.png)
 
 ---
 
